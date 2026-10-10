@@ -1,0 +1,1094 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#1e2023">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="description" content="حاسبة علمية كاملة بشكل الآلات الحاسبة الكلاسيكية: دوال، كسور، متغيرات، ذاكرة، حل معادلات، تحويل وحدات.">
+<title>حاسبة علمية fx-991</title>
+<style>
+:root{
+  --body-top:#2a2c30; --body-bot:#1b1d20;
+  --gold:#e3b341;
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+html,body{height:100%; margin:0; background:#1b1d20; overscroll-behavior:none}
+body{font-family:"Segoe UI",Tahoma,"Noto Sans Arabic",system-ui,sans-serif; color:#eceae4}
+
+/* الجهاز نفسه = الشاشة كلها */
+.calc{
+  direction:ltr; position:fixed; top:0; left:0; right:0; height:100vh; height:var(--app-h, 100dvh);
+  display:flex; flex-direction:column;
+  padding:max(8px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
+  background:linear-gradient(var(--body-top), var(--body-bot));
+}
+/* على الحاسوب فقط: عرض مناسب في الوسط */
+@media (hover:hover) and (pointer:fine){
+  .calc{max-width:480px; width:100%; left:50%; right:auto; transform:translateX(-50%)}
+}
+/* الوضع الأفقي */
+@media (orientation:landscape) and (max-height:520px){
+  .calc{padding-top:4px; padding-bottom:4px}
+  .brand{display:none}
+  .expr{min-height:1.2em; line-height:1.2; font-size:1rem}
+  .res{font-size:1.7rem; min-height:1.1em}
+  .keys{gap:4px; margin-top:6px}
+  .k .sh{display:none} .fn.hs .mn{margin-top:0}
+}
+.brand{display:flex; align-items:center; gap:10px; padding:2px 2px 8px}
+.logo{font-style:italic; font-weight:800; font-size:1.05rem; letter-spacing:.02em}
+.sub{font-size:.72rem; opacity:.65}
+.solar{
+  margin-left:auto; width:92px; height:16px; border-radius:3px; border:1px solid #000;
+  background:repeating-linear-gradient(90deg,#4a3228 0 22%,#150e0b 22% 23.5%);
+  box-shadow:inset 0 1px 2px rgba(255,255,255,.15);
+}
+.hbtn{
+  background:none; border:1px solid rgba(255,255,255,.3); color:inherit; border-radius:999px;
+  padding:3px 12px; font:inherit; font-size:.8rem; cursor:pointer;
+}
+
+/* الشاشة */
+.lcd{
+  flex:0 0 auto; border-radius:10px; border:3px solid #0d0e10; padding:6px 12px 8px;
+  background:linear-gradient(#d4dcb6,#c1caa0); color:#1b2314;
+  box-shadow:inset 0 3px 9px rgba(0,0,0,.35), 0 1px 0 rgba(255,255,255,.1);
+  font-family:ui-monospace,"Courier New",monospace;
+}
+.ind{display:flex; flex-wrap:wrap; gap:8px; font-size:.62rem; font-weight:700; letter-spacing:.06em; min-height:1.1em}
+.ind span{opacity:.18}
+.ind span.on{opacity:1}
+.expr{
+  position:relative; font-size:clamp(1.05rem,4.6vw,1.35rem); min-height:1.7em; line-height:1.7; overflow-x:auto; white-space:pre;
+  scrollbar-width:none; text-align:left; margin-top:2px;
+}
+.expr::-webkit-scrollbar,.res::-webkit-scrollbar{display:none}
+.caret{display:inline-block; width:2px; height:1.15em; background:currentColor; vertical-align:text-bottom; margin:0 -1px; animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.res{
+  font-size:clamp(2rem,10.5vw,2.9rem); font-weight:700; text-align:right; min-height:1.25em; line-height:1.25;
+  overflow-x:auto; white-space:nowrap; scrollbar-width:none; cursor:pointer;
+}
+.res.m{font-size:clamp(1.5rem,7.5vw,2.1rem)}
+.res.s{font-size:clamp(1.15rem,5.5vw,1.6rem)}
+.res.dim{opacity:.5}
+.res.err{font-size:1.15rem; color:#7b2110; font-family:"Segoe UI",Tahoma,system-ui,sans-serif; direction:rtl; text-align:right}
+.msg{font-size:.72rem; min-height:1.1em; text-align:right; direction:rtl; opacity:.75; font-family:"Segoe UI",Tahoma,system-ui,sans-serif}
+
+/* لوحة الأزرار */
+.keys{
+  flex:1; min-height:0; margin-top:10px; display:grid; gap:7px 7px; grid-template-columns:repeat(5,1fr);
+  grid-template-rows:repeat(6,.78fr) repeat(4,1.12fr);
+}
+.k{
+  position:relative; min-height:0; border:0; border-radius:10px; padding:0; cursor:pointer;
+  display:flex; align-items:center; justify-content:center; font-family:inherit; color:inherit;
+  touch-action:manipulation; user-select:none; -webkit-user-select:none;
+  box-shadow:0 3px 0 #0b0c0e, inset 0 1px 0 rgba(255,255,255,.14);
+  transition:transform .05s, box-shadow .05s;
+}
+.k:active{transform:translateY(2px); box-shadow:0 1px 0 #0b0c0e, inset 0 1px 0 rgba(255,255,255,.14)}
+.k:focus-visible{outline:2px solid #fff; outline-offset:2px}
+.k .sh{position:absolute; top:2px; left:0; right:0; text-align:center; font-size:.58rem; line-height:1; color:var(--gold); font-weight:700; pointer-events:none}
+.k .mn{font-size:clamp(.82rem,3.9vw,1.05rem); font-weight:600}
+.fn{background:linear-gradient(#4b4f55,#3a3d42)}
+.fn.hs .mn{margin-top:.5em}
+.op{background:linear-gradient(#5b5f66,#464a50)}
+.op .mn{font-size:clamp(1.1rem,5.6vw,1.5rem)}
+.num{background:linear-gradient(#e8e8e3,#cfcfc8); color:#14161a}
+.num .mn{font-size:clamp(1.25rem,6.4vw,1.75rem); font-weight:700}
+.del{background:linear-gradient(#d68c36,#b4701f); color:#fff}
+.ac{background:linear-gradient(#cb553b,#a63c27); color:#fff}
+.eq{background:linear-gradient(#3c7cc6,#2a5e9e); color:#fff}
+.eq .mn{font-size:1.6rem}
+.shift{background:linear-gradient(#f2c44d,#d6a42e); color:#2a2105}
+.shift .mn{font-weight:800}
+.k.on{outline:2px solid var(--gold); outline-offset:-2px}
+.calc.shifted .k.shl{outline:1px solid rgba(227,179,65,.8); outline-offset:-1px}
+.calc.shifted .k.shl .mn{color:var(--gold); font-weight:800}
+.calc.shifted .k.shl .sh{color:#cfcfcf}
+.calc.shifted .k.nos{opacity:.4}
+
+/* النوافذ (السجل والأدوات) */
+.sheet{
+  -webkit-overflow-scrolling:touch; position:fixed; inset:0; z-index:10; overflow-y:auto; direction:rtl; background:#1d1f23; color:#eceae4;
+  padding:max(12px, env(safe-area-inset-top)) 14px max(16px, env(safe-area-inset-bottom));
+}
+.sheet[hidden]{display:none}
+.sheet-in{max-width:520px; margin:0 auto}
+.sheet-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:12px}
+.sheet-head h2{margin:0; font-size:1.15rem}
+.sbtn{background:#33363b; border:0; color:inherit; border-radius:10px; padding:8px 14px; font:inherit; cursor:pointer}
+.tabs{display:flex; gap:6px; overflow-x:auto; padding-bottom:8px; scrollbar-width:none}
+.tabs .sbtn{white-space:nowrap}
+.tabs .sbtn.on{background:var(--gold); color:#2a2105; font-weight:700}
+.form{display:grid; gap:10px; margin:10px 0 14px}
+.f{display:grid; gap:4px; font-size:.85rem}
+.f span{opacity:.75}
+.f input,.f select{
+  width:100%; background:#2a2d32; color:#fff; border:1px solid #44484f; border-radius:10px;
+  padding:11px 12px; font:inherit; font-size:1rem; direction:ltr; text-align:left;
+}
+.row2{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+.row3{display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px}
+.out{display:grid; gap:8px}
+.line{
+  display:block; width:100%; text-align:right; background:#26292e; border:1px solid #3a3e45; color:#fff;
+  border-radius:10px; padding:11px 12px; font:inherit; font-size:1rem; direction:rtl;
+}
+button.line{cursor:pointer}
+.hint{font-size:.78rem; opacity:.6; margin-top:6px}
+.h-item{
+  display:block; width:100%; text-align:left; direction:ltr; background:#26292e; border:1px solid #3a3e45; color:#fff;
+  border-radius:10px; padding:10px 12px; margin-bottom:8px; cursor:pointer; font-family:ui-monospace,"Courier New",monospace;
+}
+.h-item small{display:block; opacity:.65; font-size:.8rem; overflow-wrap:anywhere}
+.h-item b{font-size:1.1rem}
+.empty{opacity:.65; padding:14px 2px}
+
+@media (max-height:640px){ .k .sh{display:none} .fn.hs .mn{margin-top:0} }
+@media (prefers-reduced-motion:reduce){ .caret{animation:none} .k{transition:none} }
+</style>
+</head>
+<body>
+<div class="calc" id="calc">
+  <div class="brand">
+    <span class="logo">fx-991</span>
+    <span class="sub">حاسبة علمية</span>
+    <div class="solar" aria-hidden="true"></div>
+    <button class="hbtn" id="histBtn" type="button">السجل</button>
+  </div>
+
+  <section class="lcd" aria-live="polite">
+    <div class="ind" id="ind"></div>
+    <div class="expr" id="expr"></div>
+    <div class="res" id="res" title="اضغط لنسخ النتيجة">0</div>
+    <div class="msg" id="msg"></div>
+  </section>
+
+  <div class="keys" id="keys"></div>
+</div>
+
+<div class="sheet" id="sheet" hidden>
+  <div class="sheet-in">
+    <div class="sheet-head"><h2 id="sheetTitle"></h2><button class="sbtn" id="sheetClose" type="button">إغلاق</button></div>
+    <div id="sheetBody"></div>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+/* ====================== الحالة ====================== */
+/* ENGINE START */
+const state = {
+  expr:"", pos:0, ans:0, ang:"DEG", fmt:0,
+  shift:false, hyp:false, sto:false, frac:false,
+  done:false, err:false, errMsg:"",
+  mem:0, vars:{A:0,B:0,C:0,D:0,X:0,Y:0}, history:[]
+};
+const FMTS = ["Norm","Fix 2","Fix 4","Fix 6","Sci 5"];
+
+function clean(v){
+  if(!Number.isFinite(v)) throw new Error("غير معرّف");
+  return parseFloat(v.toPrecision(12));
+}
+function fact(n){
+  if(!Number.isInteger(n) || n < 0 || n > 170) throw new Error("غير معرّف");
+  let r = 1;
+  for(let i = 2; i <= n; i++) r *= i;
+  return r;
+}
+function perm(n, r){
+  if(!Number.isInteger(n) || !Number.isInteger(r) || n < 0 || r < 0 || r > n) throw new Error("غير معرّف");
+  let v = 1;
+  for(let i = 0; i < r; i++) v *= (n - i);
+  return v;
+}
+function comb(n, r){
+  if(!Number.isInteger(n) || !Number.isInteger(r) || n < 0 || r < 0 || r > n) throw new Error("غير معرّف");
+  r = Math.min(r, n - r);
+  let v = 1;
+  for(let i = 1; i <= r; i++) v = v * (n - r + i) / i;
+  return Math.round(v);
+}
+function xroot(n, x){
+  if(n === 0) throw new Error("غير معرّف");
+  if(x < 0){
+    if(Number.isInteger(n) && Math.abs(n) % 2 === 1) return -Math.pow(-x, 1 / n);
+    throw new Error("جذر عدد سالب");
+  }
+  return Math.pow(x, 1 / n);
+}
+function applyFn(name, a){
+  const toRad = x => state.ang === "DEG" ? x * Math.PI / 180 : state.ang === "GRA" ? x * Math.PI / 200 : x;
+  const toAng = x => state.ang === "DEG" ? x * 180 / Math.PI : state.ang === "GRA" ? x * 200 / Math.PI : x;
+  const snap = x => Math.abs(x) < 1e-12 ? 0 : x;
+  switch(name){
+    case "sin": return snap(Math.sin(toRad(a)));
+    case "cos": return snap(Math.cos(toRad(a)));
+    case "tan":
+      if(Math.abs(Math.cos(toRad(a))) < 1e-12) throw new Error("غير معرّف");
+      return snap(Math.tan(toRad(a)));
+    case "sin⁻¹": if(Math.abs(a) > 1) throw new Error("خارج المجال"); return toAng(Math.asin(a));
+    case "cos⁻¹": if(Math.abs(a) > 1) throw new Error("خارج المجال"); return toAng(Math.acos(a));
+    case "tan⁻¹": return toAng(Math.atan(a));
+    case "sinh": return Math.sinh(a);
+    case "cosh": return Math.cosh(a);
+    case "tanh": return Math.tanh(a);
+    case "sinh⁻¹": return Math.asinh(a);
+    case "cosh⁻¹": if(a < 1) throw new Error("خارج المجال"); return Math.acosh(a);
+    case "tanh⁻¹": if(Math.abs(a) >= 1) throw new Error("خارج المجال"); return Math.atanh(a);
+    case "ln":  if(a <= 0) throw new Error("خارج المجال"); return Math.log(a);
+    case "log": if(a <= 0) throw new Error("خارج المجال"); return Math.log10(a);
+    case "√":   if(a < 0) throw new Error("جذر عدد سالب"); return Math.sqrt(a);
+    case "∛":   return Math.cbrt(a);
+    case "abs": return Math.abs(a);
+  }
+  throw new Error("دالة غير معروفة");
+}
+
+const TOK = "sinh⁻¹\\(|cosh⁻¹\\(|tanh⁻¹\\(|sin⁻¹\\(|cos⁻¹\\(|tan⁻¹\\(|sinh\\(|cosh\\(|tanh\\(|sin\\(|cos\\(|tan\\(|ln\\(|log\\(|√\\(|∛\\(|abs\\(|Ans|nPr|nCr|mod|ˣ√|.";
+const TOK_END = new RegExp("(" + TOK + ")$");
+const TOK_START = new RegExp("^(" + TOK + ")");
+
+function evaluate(src){
+  const T = [];
+  const fnRe = /^(sinh⁻¹|cosh⁻¹|tanh⁻¹|sin⁻¹|cos⁻¹|tan⁻¹|sinh|cosh|tanh|sin|cos|tan|ln|log|√|∛|abs)/;
+  let i = 0;
+  while(i < src.length){
+    const rest = src.slice(i);
+    let m;
+    if(/^\s/.test(rest)){ i++; continue; }
+    if((m = rest.match(/^(\d+\.?\d*|\.\d+)/))){ T.push({t:"n", v:parseFloat(m[0])}); i += m[0].length; continue; }
+    if(rest.startsWith("Ans")){ T.push({t:"n", v:state.ans}); i += 3; continue; }
+    if(rest.startsWith("nPr")){ T.push({t:"o", v:"P"}); i += 3; continue; }
+    if(rest.startsWith("nCr")){ T.push({t:"o", v:"C"}); i += 3; continue; }
+    if(rest.startsWith("mod")){ T.push({t:"o", v:"mod"}); i += 3; continue; }
+    if(rest.startsWith("ˣ√")){ T.push({t:"o", v:"rt"}); i += 2; continue; }
+    if((m = rest.match(fnRe))){ T.push({t:"f", v:m[0]}); i += m[0].length; continue; }
+    const c = rest[0];
+    if(c === "π") T.push({t:"n", v:Math.PI});
+    else if(c === "e") T.push({t:"n", v:Math.E});
+    else if(c === "M") T.push({t:"n", v:state.mem});
+    else if("ABCDXY".includes(c)) T.push({t:"n", v:state.vars[c]});
+    else if("+-−×÷*/^!%".includes(c)){
+      const map = {"−":"-","×":"*","÷":"/"};
+      T.push({t:"o", v:map[c] || c});
+    }
+    else if(c === "(") T.push({t:"("});
+    else if(c === ")") T.push({t:")"});
+    else throw new Error("رمز غير مقبول");
+    i++;
+  }
+
+  let depth = 0;
+  for(const t of T){
+    if(t.t === "(") depth++;
+    else if(t.t === ")"){ depth--; if(depth < 0) throw new Error("أقواس غير متطابقة"); }
+  }
+  while(depth-- > 0) T.push({t:")"});
+
+  let p = 0;
+  const peek = () => T[p];
+  const isOp = (t, v) => t && t.t === "o" && t.v === v;
+  const startsPrimary = t => t && (t.t === "n" || t.t === "f" || t.t === "(");
+  const expectClose = () => {
+    if(!T[p] || T[p].t !== ")") throw new Error("عبارة غير مكتملة");
+    p++;
+  };
+
+  function expr(){
+    let v = term();
+    while(isOp(peek(), "+") || isOp(peek(), "-")){
+      const o = T[p++].v;
+      const r = term();
+      v = o === "+" ? v + r : v - r;
+    }
+    return v;
+  }
+  function term(){
+    let v = unary();
+    for(;;){
+      const t = peek();
+      if(isOp(t, "*") || isOp(t, "/") || isOp(t, "mod")){
+        p++;
+        const r = unary();
+        if(t.v === "/"){
+          if(r === 0) throw new Error("قسمة على صفر");
+          v /= r;
+        } else if(t.v === "mod"){
+          if(r === 0) throw new Error("قسمة على صفر");
+          v = ((v % r) + r) % r;
+        } else v *= r;
+      } else if(startsPrimary(t)){
+        v *= permLevel();           // ضرب ضمني: 2π ، 3(4) ، 2sin(30)
+      } else break;
+    }
+    return v;
+  }
+  function unary(){
+    const t = peek();
+    if(isOp(t, "-")){ p++; return -unary(); }
+    if(isOp(t, "+")){ p++; return unary(); }
+    return permLevel();
+  }
+  function permLevel(){
+    let v = power();
+    while(isOp(peek(), "P") || isOp(peek(), "C")){
+      const o = T[p++].v;
+      const r = power();
+      v = o === "P" ? perm(v, r) : comb(v, r);
+    }
+    return v;
+  }
+  function power(){
+    const b = postfix();
+    if(isOp(peek(), "^")){
+      p++;
+      const x = unary();
+      const r = Math.pow(b, x);
+      if(!Number.isFinite(r)) throw new Error("غير معرّف");
+      return r;
+    }
+    if(isOp(peek(), "rt")){
+      p++;
+      const x = postfix();
+      return xroot(b, x);
+    }
+    return b;
+  }
+  function postfix(){
+    let v = primary();
+    for(;;){
+      const t = peek();
+      if(isOp(t, "!")){ p++; v = fact(v); }
+      else if(isOp(t, "%")){ p++; v = v / 100; }
+      else break;
+    }
+    return v;
+  }
+  function primary(){
+    const t = T[p++];
+    if(!t) throw new Error("عبارة غير مكتملة");
+    if(t.t === "n") return t.v;
+    if(t.t === "("){ const v = expr(); expectClose(); return v; }
+    if(t.t === "f"){
+      if(!T[p] || T[p].t !== "(") throw new Error("عبارة غير صحيحة");
+      p++;
+      const a = expr();
+      expectClose();
+      return applyFn(t.v, a);
+    }
+    throw new Error("عبارة غير صحيحة");
+  }
+
+  const v = expr();
+  if(p < T.length) throw new Error("عبارة غير صحيحة");
+  return clean(v);
+}
+
+function format(v){
+  if(v === 0) return "0";
+  const f = FMTS[state.fmt];
+  if(f.startsWith("Fix")){
+    return v.toFixed(parseInt(f.slice(4), 10));
+  }
+  if(f.startsWith("Sci")){
+    return v.toExponential(parseInt(f.slice(4), 10)).replace("e+", "e");
+  }
+  const a = Math.abs(v);
+  if(a >= 1e12 || a < 1e-7){
+    return v.toExponential(8).replace(/\.?0+e/, "e").replace("e+", "e");
+  }
+  return String(v);
+}
+
+function toFrac(v){
+  if(Number.isInteger(v)) return String(v);
+  const sign = v < 0 ? "-" : "";
+  const x = Math.abs(v);
+  let h0 = 0, h1 = 1, k0 = 1, k1 = 0, b = x;
+  for(let i = 0; i < 40; i++){
+    const a = Math.floor(b);
+    const h2 = a * h1 + h0, k2 = a * k1 + k0;
+    h0 = h1; h1 = h2; k0 = k1; k1 = k2;
+    if(k1 > 10000) return null;
+    if(Math.abs(x - h1 / k1) < 1e-10 * Math.max(1, x)) return sign + h1 + "/" + k1;
+    if(b - a < 1e-12) break;
+    b = 1 / (b - a);
+  }
+  return null;
+}
+/* ENGINE END */
+
+/* ====================== أدوات مساعدة ====================== */
+const $ = id => document.getElementById(id);
+const LS = "sci-calc-fx991-v1";
+const isOpChar = c => c !== "" && "+−×÷".includes(c);
+const balance = s => { let d = 0; for(const c of s){ if(c === "(") d++; else if(c === ")") d--; } return d; };
+const vib = () => { try{ navigator.vibrate && navigator.vibrate(8); }catch(_){} };
+
+function save(){
+  try{
+    localStorage.setItem(LS, JSON.stringify({
+      hist: state.history, vars: state.vars, mem: state.mem, ang: state.ang, fmt: state.fmt, ans: state.ans
+    }));
+  }catch(_){}
+}
+function load(){
+  try{
+    const d = JSON.parse(localStorage.getItem(LS) || "{}");
+    if(Array.isArray(d.hist)) state.history = d.hist.slice(0, 50);
+    if(d.vars) Object.assign(state.vars, d.vars);
+    if(typeof d.mem === "number") state.mem = d.mem;
+    if(["DEG","RAD","GRA"].includes(d.ang)) state.ang = d.ang;
+    if(Number.isInteger(d.fmt) && d.fmt >= 0 && d.fmt < FMTS.length) state.fmt = d.fmt;
+    if(typeof d.ans === "number") state.ans = d.ans;
+  }catch(_){}
+}
+
+let msgTimer = null;
+function setMsg(t){
+  $("msg").textContent = t;
+  clearTimeout(msgTimer);
+  if(t) msgTimer = setTimeout(() => { $("msg").textContent = ""; }, 2200);
+}
+
+function valueNow(){
+  if(state.done) return state.ans;
+  if(!state.expr) return null;
+  try{ return evaluate(state.expr); }catch(_){ return null; }
+}
+
+/* ====================== الإدخال ====================== */
+const MAX_LEN = 220;
+
+function prep(kind){
+  if(state.err){ state.err = false; }
+  if(state.done){
+    state.expr = (kind === "bin") ? "Ans" : "";
+    state.pos = state.expr.length;
+    state.done = false;
+    state.frac = false;
+  }
+}
+
+function insert(text, kind){
+  prep(kind);
+  let head = state.expr.slice(0, state.pos);
+  const tail = state.expr.slice(state.pos);
+  const last = head.slice(-1);
+  if(state.expr.length + text.length > MAX_LEN) return render();
+
+  if(kind === "digit"){
+    if(text === "."){
+      const m = head.match(/[\d.]+$/);
+      if(m){ if(m[0].includes(".")) return render(); }
+      else text = "0.";
+    }
+    head += text;
+  }
+  else if(kind === "open"){
+    head += text;
+  }
+  else if(kind === "close"){
+    if(balance(head) <= 0 || isOpChar(last) || last === "(") return render();
+    head += text;
+  }
+  else if(kind === "bin"){
+    if(head === ""){
+      if(text === "−") head = "−"; else return render();
+    }
+    else if(text === "+" || text === "×" || text === "÷"){
+      head = isOpChar(last) ? head.slice(0, -1) + text : head + text;
+    }
+    else if(text === "−"){
+      head = (last === "+" || last === "−") ? head.slice(0, -1) + text : head + text;
+    }
+    else {
+      if(isOpChar(last) || last === "(" || last === "^") return render();
+      head += text;
+    }
+  }
+  state.expr = head + tail;
+  state.pos = head.length;
+  render();
+}
+
+function backspace(){
+  if(state.err){ state.err = false; return render(); }
+  if(state.done){ state.done = false; state.frac = false; state.pos = state.expr.length; }
+  const head = state.expr.slice(0, state.pos);
+  const m = head.match(TOK_END);
+  if(!m) return render();
+  state.expr = head.slice(0, head.length - m[0].length) + state.expr.slice(state.pos);
+  state.pos = head.length - m[0].length;
+  render();
+}
+
+function clearAll(){
+  Object.assign(state, {expr:"", pos:0, done:false, err:false, frac:false, sto:false, hyp:false, shift:false});
+  setMsg("");
+  render();
+}
+
+function moveLeft(){
+  if(state.err) state.err = false;
+  if(state.done){ state.done = false; state.frac = false; state.pos = state.expr.length; }
+  const m = state.expr.slice(0, state.pos).match(TOK_END);
+  if(m) state.pos -= m[0].length;
+  render();
+}
+function moveRight(){
+  if(state.err) state.err = false;
+  if(state.done){ state.done = false; state.frac = false; state.pos = state.expr.length; return render(); }
+  const m = state.expr.slice(state.pos).match(TOK_START);
+  if(m) state.pos += m[0].length;
+  render();
+}
+
+function negate(){
+  prep("open");
+  const e = state.expr, last = e.slice(-1);
+  if(e === "") state.expr = "−";
+  else if(isOpChar(last) || last === "(" || last === "^") state.expr = e + "−";
+  else if(balance(e) === 0){
+    const m = e.match(/^−\((.*)\)$/);
+    state.expr = (m && balance(m[1]) === 0) ? m[1] : "−(" + e + ")";
+  }
+  state.pos = state.expr.length;
+  render();
+}
+
+function equals(){
+  if(state.err || state.done || !state.expr) return;
+  try{
+    const r = evaluate(state.expr);
+    state.ans = r;
+    state.done = true;
+    state.frac = false;
+    state.history.unshift({e: state.expr, r: format(r)});
+    if(state.history.length > 50) state.history.pop();
+    save();
+  }catch(err){
+    state.err = true;
+    state.errMsg = err.message || "خطأ";
+  }
+  render();
+}
+
+/* ====================== الأفعال الخاصة ====================== */
+const ANGS = ["DEG","RAD","GRA"];
+const ACTS = {
+  mode(){
+    state.ang = ANGS[(ANGS.indexOf(state.ang) + 1) % 3];
+    setMsg({DEG:"الزوايا: درجات", RAD:"الزوايا: راديان", GRA:"الزوايا: غراد"}[state.ang]);
+    save(); render();
+  },
+  setup(){
+    state.fmt = (state.fmt + 1) % FMTS.length;
+    setMsg("عرض الأرقام: " + FMTS[state.fmt]);
+    save(); render();
+  },
+  left: moveLeft,
+  right: moveRight,
+  home(){ state.done = false; state.pos = 0; render(); },
+  end(){ state.done = false; state.pos = state.expr.length; render(); },
+  tools(){ openSheet("tools"); },
+  trig(def, s){
+    const name = def.n + (state.hyp ? "h" : "") + (s ? "⁻¹" : "");
+    state.hyp = false;
+    insert(name + "(", "open");
+  },
+  hyp(){ state.hyp = !state.hyp; render(); },
+  sd(){
+    if(!state.done){ setMsg("احسب أولًا ثم اضغط S⇔D"); return render(); }
+    if(!state.frac && toFrac(state.ans) === null){ setMsg("لا يوجد كسر بسيط لهذه النتيجة"); return render(); }
+    state.frac = !state.frac;
+    render();
+  },
+  ran(){ insert(Math.random().toFixed(3), "open"); },
+  sto(){
+    state.sto = !state.sto;
+    setMsg(state.sto ? "اختر المتغير لحفظ القيمة فيه" : "");
+    render();
+  },
+  v(def, s){
+    const name = s ? def.s : def.i;
+    if(state.sto){
+      const v = valueNow();
+      state.sto = false;
+      if(v === null){ setMsg("لا توجد قيمة للحفظ"); return render(); }
+      state.vars[name] = v;
+      save();
+      setMsg(name + " = " + format(v));
+      return render();
+    }
+    insert(name, "open");
+  },
+  mplus(def, s){
+    const v = valueNow();
+    if(v === null){ setMsg("لا توجد قيمة"); return render(); }
+    try{ state.mem = clean(state.mem + (s ? -v : v)); }catch(_){}
+    if(!state.done){ state.ans = v; state.done = true; state.frac = false; }
+    save(); setMsg("M = " + format(state.mem)); render();
+  },
+  mr(){ insert("M", "open"); },
+  mc(){ state.mem = 0; save(); setMsg("تم مسح الذاكرة M"); render(); },
+  neg: negate,
+  back: backspace,
+  clear: clearAll,
+  equals
+};
+
+/* ====================== الأزرار ====================== */
+/* i = ما يُدرج ، k = نوعه ، s = تسمية الشيفت ، si/sk = إدراج الشيفت ، a/sa = فعل */
+const KEYS = [
+  {m:"SHIFT", a:"shift", c:"shift"},
+  {m:"MODE", s:"SETUP", a:"mode", sa:"setup", c:"fn"},
+  {m:"◀", s:"⇤", a:"left", sa:"home", c:"fn"},
+  {m:"▶", s:"⇥", a:"right", sa:"end", c:"fn"},
+  {m:"أدوات", a:"tools", c:"fn"},
+
+  {m:"sin", s:"sin⁻¹", n:"sin", a:"trig", sa:"trig", c:"fn"},
+  {m:"cos", s:"cos⁻¹", n:"cos", a:"trig", sa:"trig", c:"fn"},
+  {m:"tan", s:"tan⁻¹", n:"tan", a:"trig", sa:"trig", c:"fn"},
+  {m:"hyp", a:"hyp", c:"fn"},
+  {m:"S⇔D", s:"Ran#", a:"sd", sa:"ran", c:"fn"},
+
+  {m:"ln",  s:"eˣ",  i:"ln(",  si:"e^(",  k:"open", c:"fn"},
+  {m:"log", s:"10ˣ", i:"log(", si:"10^(", k:"open", c:"fn"},
+  {m:"√",   s:"∛",   i:"√(",   si:"∛(",   k:"open", c:"fn"},
+  {m:"x²",  s:"x³",  i:"^2",   si:"^3",   k:"bin",  c:"fn"},
+  {m:"xʸ",  s:"ˣ√",  i:"^",    si:"ˣ√",   k:"bin",  c:"fn"},
+
+  {m:"(", i:"(", k:"open", c:"fn"},
+  {m:")", i:")", k:"close", c:"fn"},
+  {m:"n!", i:"!", k:"bin", c:"fn"},
+  {m:"nCr", s:"nPr", i:"nCr", si:"nPr", k:"bin", c:"fn"},
+  {m:"x⁻¹", s:"|x|", i:"^(−1)", si:"abs(", k:"bin", sk:"open", c:"fn"},
+
+  {m:"π", s:"e", i:"π", si:"e", k:"open", c:"fn"},
+  {m:"A", s:"C", i:"A", a:"v", sa:"v", c:"fn"},
+  {m:"B", s:"D", i:"B", a:"v", sa:"v", c:"fn"},
+  {m:"X", s:"Y", i:"X", a:"v", sa:"v", c:"fn"},
+  {m:"STO", a:"sto", c:"fn"},
+
+  {m:"M+", s:"M−", a:"mplus", sa:"mplus", c:"fn"},
+  {m:"MR", s:"MC", a:"mr", sa:"mc", c:"fn"},
+  {m:"mod", i:"mod", k:"bin", c:"fn"},
+  {m:"±", a:"neg", c:"fn"},
+  {m:"%", i:"%", k:"bin", c:"fn"},
+
+  {m:"7", i:"7", k:"digit", c:"num"},
+  {m:"8", i:"8", k:"digit", c:"num"},
+  {m:"9", i:"9", k:"digit", c:"num"},
+  {m:"DEL", a:"back", c:"del"},
+  {m:"AC", a:"clear", c:"ac"},
+
+  {m:"4", i:"4", k:"digit", c:"num"},
+  {m:"5", i:"5", k:"digit", c:"num"},
+  {m:"6", i:"6", k:"digit", c:"num"},
+  {m:"×", i:"×", k:"bin", c:"op"},
+  {m:"÷", i:"÷", k:"bin", c:"op"},
+
+  {m:"1", i:"1", k:"digit", c:"num"},
+  {m:"2", i:"2", k:"digit", c:"num"},
+  {m:"3", i:"3", k:"digit", c:"num"},
+  {m:"+", i:"+", k:"bin", c:"op"},
+  {m:"−", i:"−", k:"bin", c:"op"},
+
+  {m:"0", i:"0", k:"digit", c:"num"},
+  {m:".", i:".", k:"digit", c:"num"},
+  {m:"×10ˣ", i:"×10^", k:"bin", c:"op"},
+  {m:"Ans", i:"Ans", k:"open", c:"op"},
+  {m:"=", a:"equals", c:"eq"}
+];
+
+const keyRefs = [];
+KEYS.forEach(def => {
+  const b = document.createElement("button");
+  b.type = "button";
+  b.className = "k " + def.c + (def.s ? " hs" : "") + (def.c === "fn" && !def.s ? " nos" : "");
+  let sub = null;
+  if(def.s){
+    sub = document.createElement("span");
+    sub.className = "sh"; sub.textContent = def.s;
+    b.appendChild(sub);
+  }
+  const m = document.createElement("span");
+  m.className = "mn"; m.textContent = def.m;
+  b.appendChild(m);
+  b.addEventListener("click", () => press(def));
+  $("keys").appendChild(b);
+  keyRefs.push({def, b, m, sub});
+});
+
+function press(def){
+  vib();
+  if(def.a === "shift"){ state.shift = !state.shift; return render(); }
+  const sh = state.shift;
+  state.shift = false;
+  const useS = sh && (def.sa !== undefined || def.si !== undefined);
+  const act = useS ? def.sa : def.a;
+  const text = useS ? (def.si !== undefined ? def.si : def.i) : def.i;
+  const kind = useS ? (def.sk || def.k) : def.k;
+  if(act) return ACTS[act](def, useS);
+  if(text !== undefined) insert(text, kind);
+  else render();
+}
+
+/* ====================== العرض ====================== */
+const indEls = {};
+["S","STO","M","HYP","ANG","FMT","FRAC"].forEach(k => {
+  const s = document.createElement("span");
+  indEls[k] = s;
+  $("ind").appendChild(s);
+});
+indEls.S.textContent = "S";
+indEls.STO.textContent = "STO";
+indEls.M.textContent = "M";
+indEls.HYP.textContent = "HYP";
+indEls.FRAC.textContent = "a/b";
+
+function keyLabel(def, shifted){
+  if(def.a === "trig") return def.n + (state.hyp ? "h" : "") + (shifted ? "⁻¹" : "");
+  return shifted ? def.s : def.m;
+}
+
+function render(){
+  $("calc").classList.toggle("shifted", state.shift);
+  indEls.S.classList.toggle("on", state.shift);
+  indEls.STO.classList.toggle("on", state.sto);
+  indEls.M.classList.toggle("on", state.mem !== 0);
+  indEls.HYP.classList.toggle("on", state.hyp);
+  indEls.ANG.textContent = state.ang;
+  indEls.ANG.classList.add("on");
+  indEls.FMT.textContent = FMTS[state.fmt];
+  indEls.FMT.classList.toggle("on", state.fmt !== 0);
+  indEls.FRAC.classList.toggle("on", state.frac);
+
+  keyRefs.forEach(({def, b, m, sub}) => {
+    if(def.a === "hyp") b.classList.toggle("on", state.hyp);
+    if(def.a === "sto") b.classList.toggle("on", state.sto);
+    if(def.a === "shift") b.classList.toggle("on", state.shift);
+    if(def.s){
+      m.textContent = keyLabel(def, state.shift);
+      sub.textContent = keyLabel(def, !state.shift);
+      b.classList.toggle("shl", state.shift);
+    }
+  });
+
+  const ex = $("expr");
+  ex.textContent = "";
+  let caret = null;
+  if(state.done){
+    ex.textContent = state.expr + " =";
+  } else {
+    ex.appendChild(document.createTextNode(state.expr.slice(0, state.pos)));
+    caret = document.createElement("span");
+    caret.className = "caret";
+    ex.appendChild(caret);
+    ex.appendChild(document.createTextNode(state.expr.slice(state.pos)));
+  }
+
+  let text = "0", cls = "res";
+  if(state.err){
+    text = state.errMsg; cls += " err";
+  } else if(state.done){
+    text = state.frac ? (toFrac(state.ans) || format(state.ans)) : format(state.ans);
+  } else if(state.expr){
+    try{ text = format(evaluate(state.expr)); cls += " dim"; }
+    catch(_){ text = ""; }
+  }
+  if(!state.err){
+    if(text.length > 17) cls += " s";
+    else if(text.length > 10) cls += " m";
+  }
+  $("res").textContent = text;
+  $("res").className = cls;
+
+  if(caret){
+    const left = caret.offsetLeft, w = ex.clientWidth;
+    if(left < ex.scrollLeft + 10) ex.scrollLeft = Math.max(0, left - 10);
+    else if(left > ex.scrollLeft + w - 24) ex.scrollLeft = left - w + 30;
+  } else ex.scrollLeft = ex.scrollWidth;
+}
+
+$("res").addEventListener("click", () => {
+  const t = $("res").textContent;
+  if(!t || state.err) return;
+  const done = () => setMsg("تم نسخ النتيجة");
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(t).then(done, () => setMsg("تعذّر النسخ"));
+  } else setMsg("النسخ غير مدعوم في هذا المتصفح");
+});
+
+/* ====================== النوافذ ====================== */
+const sheet = $("sheet"), sheetBody = $("sheetBody");
+function openSheet(type){
+  sheetBody.innerHTML = "";
+  if(type === "history"){ $("sheetTitle").textContent = "سجل العمليات"; buildHistory(); }
+  else { $("sheetTitle").textContent = "أدوات"; buildTools(); }
+  sheet.hidden = false;
+  sheet.scrollTop = 0;
+}
+function closeSheet(){ sheet.hidden = true; }
+$("sheetClose").addEventListener("click", closeSheet);
+$("histBtn").addEventListener("click", () => openSheet("history"));
+
+function el(tag, props, ...kids){
+  const n = document.createElement(tag);
+  if(props) Object.assign(n, props);
+  kids.forEach(k => n.append(k));
+  return n;
+}
+
+function buildHistory(){
+  if(!state.history.length){
+    sheetBody.append(el("div", {className:"empty", textContent:"لا توجد عمليات بعد."}));
+    return;
+  }
+  state.history.forEach(h => {
+    const b = el("button", {type:"button", className:"h-item"}, el("small", {textContent:h.e}), el("b", {textContent:"= " + h.r}));
+    b.addEventListener("click", () => {
+      state.expr = h.e; state.pos = h.e.length; state.done = false; state.err = false; state.frac = false;
+      closeSheet(); render();
+    });
+    sheetBody.append(b);
+  });
+  const clr = el("button", {type:"button", className:"sbtn", textContent:"مسح السجل"});
+  clr.addEventListener("click", () => { state.history = []; save(); buildHistoryRefresh(); });
+  sheetBody.append(clr);
+}
+function buildHistoryRefresh(){ sheetBody.innerHTML = ""; buildHistory(); }
+
+/* ---- الأدوات ---- */
+const nf = v => String(parseFloat(Number(v).toPrecision(10)));
+function numForCalc(v){
+  let s = Number.isInteger(v) ? String(v) : v.toFixed(10).replace(/\.?0+$/, "");
+  s = s.replace("-", "−");
+  return v < 0 ? "(" + s + ")" : s;
+}
+function showLines(box, lines){
+  box.innerHTML = "";
+  lines.forEach(L => {
+    if(L.v !== undefined && L.v !== null && Number.isFinite(L.v)){
+      const b = el("button", {type:"button", className:"line", textContent:L.l + " = " + nf(L.v)});
+      b.addEventListener("click", () => { closeSheet(); insert(numForCalc(L.v), "open"); });
+      box.append(b);
+    } else box.append(el("div", {className:"line", textContent:(L.l ? L.l + " : " : "") + (L.t || "")}));
+  });
+}
+function field(label, def, opts){
+  const w = el("label", {className:"f"}, el("span", {textContent:label}));
+  let i;
+  if(opts){
+    i = el("select");
+    opts.forEach(([val, txt]) => i.append(el("option", {value:val, textContent:txt})));
+    i.value = def;
+  } else {
+    i = el("input", {type:"text", inputMode:"decimal", value:def == null ? "" : def, autocomplete:"off"});
+  }
+  w.append(i);
+  return {w, i};
+}
+const num = i => { const v = parseFloat(String(i.value).replace(",", ".")); return Number.isNaN(v) ? null : v; };
+
+function simpleTool(fields, compute, hint){
+  const root = el("div");
+  const form = el("div", {className:"form"});
+  const out = el("div", {className:"out"});
+  const refs = fields.map(f => { const r = field(f.label, f.def, f.opts); r.key = f.key; r.sel = !!f.opts; form.append(r.w); return r; });
+  const update = () => {
+    const vals = {};
+    refs.forEach(r => { vals[r.key] = r.sel ? r.i.value : num(r.i); });
+    try{ showLines(out, compute(vals)); }catch(_){ showLines(out, [{t:"تحقق من القيم المُدخلة"}]); }
+  };
+  refs.forEach(r => { r.i.addEventListener("input", update); r.i.addEventListener("change", update); });
+  root.append(form, out);
+  if(hint) root.append(el("div", {className:"hint", textContent:hint}));
+  update();
+  return root;
+}
+const missing = (...vs) => vs.some(v => v === null);
+
+const TOOLS = [
+  {name:"معادلة تربيعية", build:() => simpleTool(
+    [{key:"a", label:"a  (معامل x²)", def:1}, {key:"b", label:"b  (معامل x)", def:0}, {key:"c", label:"c  (الحد الثابت)", def:0}],
+    ({a,b,c}) => {
+      if(missing(a,b,c)) return [{t:"أدخل الأعداد"}];
+      if(a === 0){
+        if(b === 0) return [{t: c === 0 ? "عدد لا نهائي من الحلول" : "لا يوجد حل"}];
+        return [{l:"x", v:-c/b}];
+      }
+      const D = b*b - 4*a*c, h = -b/(2*a), k = c - b*b/(4*a);
+      const L = [{l:"Δ", v:D}];
+      if(D > 0){
+        const s = Math.sqrt(D);
+        L.push({l:"x₁", v:(-b + s)/(2*a)}, {l:"x₂", v:(-b - s)/(2*a)});
+      } else if(D === 0){
+        L.push({l:"x", v:h});
+      } else {
+        const im = Math.sqrt(-D)/(2*Math.abs(a));
+        L.push({l:"x₁", t:nf(h) + " + " + nf(im) + "i"}, {l:"x₂", t:nf(h) + " − " + nf(im) + "i"});
+      }
+      L.push({l:"رأس القطع", t:"( " + nf(h) + " ، " + nf(k) + " )"});
+      return L;
+    }, "اضغط على أي نتيجة رقمية لإدراجها في الحاسبة.")},
+
+  {name:"نظام معادلتين", build:() => simpleTool(
+    [{key:"a1", label:"a₁", def:1}, {key:"b1", label:"b₁", def:1}, {key:"c1", label:"c₁", def:3},
+     {key:"a2", label:"a₂", def:1}, {key:"b2", label:"b₂", def:-1}, {key:"c2", label:"c₂", def:1}],
+    v => {
+      if(missing(v.a1,v.b1,v.c1,v.a2,v.b2,v.c2)) return [{t:"أدخل الأعداد"}];
+      const det = v.a1*v.b2 - v.a2*v.b1;
+      if(det === 0) return [{t:"لا يوجد حل وحيد"}];
+      return [{l:"x", v:(v.c1*v.b2 - v.c2*v.b1)/det}, {l:"y", v:(v.a1*v.c2 - v.a2*v.c1)/det}];
+    }, "الصيغة:  a₁x + b₁y = c₁   و   a₂x + b₂y = c₂")},
+
+  {name:"أنظمة العد"},
+  {name:"تحويل وحدات"},
+  {name:"نسبة مئوية", build:() => simpleTool(
+    [{key:"mode", label:"نوع الحساب", def:"0", opts:[["0","x% من y"],["1","x هو كم % من y"],["2","التغيّر من x إلى y (%)"],["3","إضافة x% إلى y"],["4","خصم x% من y"]]},
+     {key:"x", label:"x", def:20}, {key:"y", label:"y", def:150}],
+    ({mode,x,y}) => {
+      if(missing(x,y)) return [{t:"أدخل الأعداد"}];
+      switch(mode){
+        case "0": return [{l:"النتيجة", v:y*x/100}];
+        case "1": if(y === 0) throw 0; return [{l:"النسبة %", v:x/y*100}];
+        case "2": if(x === 0) throw 0; return [{l:"التغيّر %", v:(y-x)/x*100}, {l:"الفرق", v:y-x}];
+        case "3": return [{l:"المبلغ بعد الإضافة", v:y*(1+x/100)}, {l:"قيمة الإضافة", v:y*x/100}];
+        default:  return [{l:"المبلغ بعد الخصم", v:y*(1-x/100)}, {l:"قيمة الخصم", v:y*x/100}];
+      }
+    })}
+];
+
+function baseTool(){
+  const root = el("div");
+  const form = el("div", {className:"form"});
+  const out = el("div", {className:"out"});
+  const v = field("العدد", "255");
+  const b = field("نظام العدد المُدخل", "10", [["2","ثنائي (2)"],["8","ثماني (8)"],["10","عشري (10)"],["16","سداسي عشري (16)"]]);
+  form.append(v.w, b.w);
+  const update = () => {
+    const base = parseInt(b.i.value, 10);
+    const s = v.i.value.trim().toUpperCase();
+    const digits = "0123456789ABCDEF".slice(0, base);
+    if(!s || ![...s].every(ch => digits.includes(ch))) return showLines(out, [{t:"عدد غير صالح في هذا النظام"}]);
+    const n = parseInt(s, base);
+    if(!Number.isSafeInteger(n)) return showLines(out, [{t:"العدد كبير جدًا"}]);
+    showLines(out, [
+      {l:"ثنائي BIN", t:n.toString(2)}, {l:"ثماني OCT", t:n.toString(8)},
+      {l:"عشري DEC", t:n.toString(10)}, {l:"سداسي عشري HEX", t:n.toString(16).toUpperCase()}
+    ]);
+  };
+  v.i.addEventListener("input", update); b.i.addEventListener("change", update);
+  root.append(form, out);
+  update();
+  return root;
+}
+
+const UNITS = {
+  length:{n:"الطول", u:{"مم":.001,"سم":.01,"م":1,"كم":1000,"إنش":.0254,"قدم":.3048,"ياردة":.9144,"ميل":1609.344}},
+  mass:{n:"الكتلة", u:{"غرام":.001,"كغ":1,"طن":1000,"رطل":.45359237,"أوقية":.028349523125}},
+  area:{n:"المساحة", u:{"سم²":1e-4,"م²":1,"هكتار":1e4,"كم²":1e6,"قدم²":.09290304,"فدان":4046.8564224}},
+  volume:{n:"الحجم", u:{"مل":.001,"لتر":1,"م³":1000,"غالون أمريكي":3.785411784}},
+  speed:{n:"السرعة", u:{"كم/س":1/3.6,"م/ث":1,"ميل/س":.44704,"عقدة":1852/3600}},
+  time:{n:"الزمن", u:{"ثانية":1,"دقيقة":60,"ساعة":3600,"يوم":86400,"أسبوع":604800}},
+  data:{n:"البيانات", u:{"B":1,"KB":1024,"MB":1048576,"GB":1073741824,"TB":1099511627776}},
+  temp:{n:"الحرارة", u:{"°C":1,"°F":1,"K":1}}
+};
+function convTemp(v, from, to){
+  const c = from === "°C" ? v : from === "°F" ? (v - 32) * 5 / 9 : v - 273.15;
+  return to === "°C" ? c : to === "°F" ? c * 9 / 5 + 32 : c + 273.15;
+}
+function unitTool(){
+  const root = el("div");
+  const form = el("div", {className:"form"});
+  const out = el("div", {className:"out"});
+  const cat = field("النوع", "length", Object.entries(UNITS).map(([k, o]) => [k, o.n]));
+  const val = field("القيمة", 1);
+  const from = field("من", "", [["",""]]);
+  const to = field("إلى", "", [["",""]]);
+  const fillUnits = () => {
+    const names = Object.keys(UNITS[cat.i.value].u);
+    [from.i, to.i].forEach((sel, idx) => {
+      sel.innerHTML = "";
+      names.forEach(n => sel.append(el("option", {value:n, textContent:n})));
+      sel.value = names[idx === 0 ? Math.min(1, names.length - 1) : 0];
+    });
+  };
+  const update = () => {
+    const v = num(val.i);
+    if(v === null) return showLines(out, [{t:"أدخل القيمة"}]);
+    const c = cat.i.value, U = UNITS[c].u;
+    const r = c === "temp" ? convTemp(v, from.i.value, to.i.value) : v * U[from.i.value] / U[to.i.value];
+    showLines(out, [{l:"النتيجة", v:r}]);
+  };
+  form.append(cat.w, val.w, el("div", {className:"row2"}, from.w, to.w));
+  cat.i.addEventListener("change", () => { fillUnits(); update(); });
+  [val.i, from.i, to.i].forEach(i => { i.addEventListener("input", update); i.addEventListener("change", update); });
+  root.append(form, out);
+  fillUnits(); update();
+  return root;
+}
+
+function buildTools(){
+  const tabs = el("div", {className:"tabs"});
+  const body = el("div");
+  const show = i => {
+    [...tabs.children].forEach((t, j) => t.classList.toggle("on", i === j));
+    body.innerHTML = "";
+    const T = TOOLS[i];
+    body.append(T.name === "أنظمة العد" ? baseTool() : T.name === "تحويل وحدات" ? unitTool() : T.build());
+  };
+  TOOLS.forEach((T, i) => {
+    const b = el("button", {type:"button", className:"sbtn", textContent:T.name});
+    b.addEventListener("click", () => show(i));
+    tabs.append(b);
+  });
+  sheetBody.append(tabs, body);
+  show(0);
+}
+
+/* ====================== لوحة المفاتيح ====================== */
+document.addEventListener("keydown", e => {
+  if(e.ctrlKey || e.metaKey || e.altKey) return;
+  const tag = e.target.tagName;
+  if(tag === "INPUT" || tag === "SELECT") return;
+  if(e.key === "Escape"){ if(!sheet.hidden) return closeSheet(); }
+  if(!sheet.hidden) return;
+  const k = e.key;
+  if(k === "Enter" && tag === "BUTTON") return;
+  if(/^[0-9]$/.test(k)) insert(k, "digit");
+  else if(k === "." || k === ",") insert(".", "digit");
+  else if(k === "+") insert("+", "bin");
+  else if(k === "-") insert("−", "bin");
+  else if(k === "*") insert("×", "bin");
+  else if(k === "/"){ e.preventDefault(); insert("÷", "bin"); }
+  else if(k === "^") insert("^", "bin");
+  else if(k === "!") insert("!", "bin");
+  else if(k === "%") insert("%", "bin");
+  else if(k === "(") insert("(", "open");
+  else if(k === ")") insert(")", "close");
+  else if(k === "Enter" || k === "="){ e.preventDefault(); equals(); }
+  else if(k === "Backspace") backspace();
+  else if(k === "Escape") clearAll();
+  else if(k === "ArrowLeft"){ e.preventDefault(); moveLeft(); }
+  else if(k === "ArrowRight"){ e.preventDefault(); moveRight(); }
+});
+
+function fit(){ document.documentElement.style.setProperty("--app-h", window.innerHeight + "px"); }
+window.addEventListener("resize", fit);
+window.addEventListener("orientationchange", () => setTimeout(fit, 150));
+fit();
+load();
+render();
+</script>
+</body>
+</html>
